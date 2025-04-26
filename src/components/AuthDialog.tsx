@@ -1,37 +1,31 @@
-
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, LogIn } from "lucide-react";
 import { useState } from "react";
-
-export const AuthDialog = ({ children }: { children: React.ReactNode }) => {
+export const AuthDialog = ({
+  children
+}: {
+  children: React.ReactNode;
+}) => {
   const [isLogin, setIsLogin] = useState(true);
-
-  return (
-    <Dialog>
+  return <Dialog>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <div className="flex flex-col space-y-6 py-6">
           <div className="flex flex-col space-y-2 text-center">
-            <h3 className="font-heading text-2xl">
+            <h3 className="bg-clip-text text-transparent bg-brand-gradient text-3xl">
               {isLogin ? "Welcome back" : "Create an account"}
             </h3>
             <p className="text-text-secondary text-sm">
-              {isLogin
-                ? "Enter your credentials to access your account"
-                : "Enter your details to create your account"}
+              {isLogin ? "Enter your credentials to access your account" : "Enter your details to create your account"}
             </p>
           </div>
 
           <Button variant="outline" className="relative">
-            <img
-              src="https://www.google.com/favicon.ico"
-              alt="Google"
-              className="w-4 h-4 absolute left-4"
-            />
+            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4 absolute left-4" />
             Continue with Google
           </Button>
 
@@ -47,16 +41,8 @@ export const AuthDialog = ({ children }: { children: React.ReactNode }) => {
           </div>
 
           <div className="space-y-4">
-            <Input
-              type="email"
-              placeholder="name@example.com"
-              className="bg-surface border-white/10"
-            />
-            <Input
-              type="password"
-              placeholder="••••••••"
-              className="bg-surface border-white/10"
-            />
+            <Input type="email" placeholder="name@example.com" className="bg-surface border-white/10" />
+            <Input type="password" placeholder="••••••••" className="bg-surface border-white/10" />
           </div>
 
           <Button className="bg-brand-gradient font-heading">
@@ -66,15 +52,11 @@ export const AuthDialog = ({ children }: { children: React.ReactNode }) => {
 
           <p className="text-center text-sm text-text-secondary">
             {isLogin ? "Don't" : "Already"} have an account?{" "}
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="underline hover:text-white transition-colors"
-            >
+            <button onClick={() => setIsLogin(!isLogin)} className="underline hover:text-white transition-colors">
               {isLogin ? "Sign up" : "Sign in"} here
             </button>
           </p>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
