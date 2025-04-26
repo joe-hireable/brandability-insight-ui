@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -36,6 +35,7 @@ export default {
           primary: "#ffffff",
           secondary: "#94a3b8",
         },
+        foreground: "hsl(var(--foreground))",
       },
       backgroundImage: {
         'brand-gradient': 'linear-gradient(238deg, rgba(108, 42, 155, 1) 0%, rgba(93, 83, 237, 1) 50%, rgba(83, 237, 229, 1) 100%)',
