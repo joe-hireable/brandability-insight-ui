@@ -516,45 +516,64 @@ const OppositionPrediction = () => {
                      </Alert>
                  )}
 
+                {/* Updated Rendering Logic */}
                 {predictionResult && !isLoading && !predictionError && (
                     <div className="space-y-6 bg-[#131722] rounded-lg border border-white/10 p-6">
-                        {/* Only render if predictionResult exists */}
-                        {predictionResult.prediction && (
+                        {/* Use opposition_outcome */}
+                        {predictionResult.opposition_outcome && (
                           <Alert
-                              variant={predictionResult.prediction.outcome.toLowerCase().includes("unlikely") ? "default" : "destructive"}
+                              variant={predictionResult.opposition_outcome.result.toLowerCase().includes("fail") ? "default" : "destructive"}
                               className="border-l-4"
                               >
-                              <AlertTitle className="text-lg font-semibold">{predictionResult.prediction.outcome}</AlertTitle>
+                              <AlertTitle className="text-lg font-semibold">{predictionResult.opposition_outcome.result}</AlertTitle>
                               <AlertDescription className="mt-1">
-                                  <p><span className="font-medium">Confidence:</span> {predictionResult.prediction.confidence}</p>
-                                  <p className="mt-2">{predictionResult.prediction.summary}</p>
+                                  <p><span className="font-medium">Confidence:</span> {(predictionResult.opposition_outcome.confidence * 100).toFixed(0)}%</p>
+                                  <p className="mt-2">{predictionResult.opposition_outcome.reasoning}</p>
                               </AlertDescription>
                           </Alert>
                         )}
 
-                        {/* Only render if analysis exists */}
-                        {predictionResult.analysis && (
-                          <>
-                            <div className="space-y-4">
-                                <h3 className="text-xl font-semibold text-brand">Mark Comparison</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {predictionResult.analysis.mark_comparison?.visual_similarity && <AnalysisCard title="Visual Similarity" analysis={predictionResult.analysis.mark_comparison.visual_similarity} />}
-                                    {predictionResult.analysis.mark_comparison?.aural_similarity && <AnalysisCard title="Aural Similarity" analysis={predictionResult.analysis.mark_comparison.aural_similarity} />}
-                                    {predictionResult.analysis.mark_comparison?.conceptual_similarity && <AnalysisCard title="Conceptual Similarity" analysis={predictionResult.analysis.mark_comparison.conceptual_similarity} />}
-                                    {predictionResult.analysis.mark_comparison?.overall_mark_similarity && <AnalysisCard title="Overall Mark Similarity" analysis={predictionResult.analysis.mark_comparison.overall_mark_similarity} />}
-                                </div>
+                        {/* Display Mark Comparison */}
+                        {predictionResult.mark_comparison && (
+                          <div className="space-y-4">
+                            <h3 className="text-xl font-semibold text-brand">Mark Comparison</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {/* Directly display string values - Replace AnalysisCard */}
+                              <div className="bg-background p-4 rounded border border-white/10">
+                                <h4 className="font-medium text-base mb-1">Visual Similarity</h4>
+                                <p className="text-sm capitalize">{predictionResult.mark_comparison.visual || 'N/A'}</p>
+                              </div>
+                              <div className="bg-background p-4 rounded border border-white/10">
+                                <h4 className="font-medium text-base mb-1">Aural Similarity</h4>
+                                <p className="text-sm capitalize">{predictionResult.mark_comparison.aural || 'N/A'}</p>
+                              </div>
+                              <div className="bg-background p-4 rounded border border-white/10">
+                                <h4 className="font-medium text-base mb-1">Conceptual Similarity</h4>
+                                <p className="text-sm capitalize">{predictionResult.mark_comparison.conceptual || 'N/A'}</p>
+                              </div>
+                               <div className="bg-background p-4 rounded border border-white/10">
+                                <h4 className="font-medium text-base mb-1">Overall Mark Similarity</h4>
+                                <p className="text-sm capitalize">{predictionResult.mark_comparison.overall || 'N/A'}</p>
+                              </div>
                             </div>
+                          </div>
+                        )}
 
-                            <div className="space-y-4">
-                                <h3 className="text-xl font-semibold text-brand">Goods & Services Comparison</h3>
-                                {predictionResult.analysis.goods_services_comparison?.overall_similarity && <AnalysisCard title="Overall Similarity" analysis={predictionResult.analysis.goods_services_comparison.overall_similarity} />}
-                            </div>
+                        {/* TODO: Display Goods & Services Comparisons list (predictionResult.goods_services_comparisons) */}
+                         {/* <div className="space-y-4">
+                            <h3 className="text-xl font-semibold text-brand">Goods & Services Comparison</h3>
+                             <AnalysisCard title="Overall Similarity" analysis={predictionResult.analysis.goods_services_comparison.overall_similarity} />
+                         </div> */}
 
-                            <div className="space-y-4">
-                                <h3 className="text-xl font-semibold text-brand">Likelihood of Confusion</h3>
-                                {predictionResult.analysis.likelihood_of_confusion && <AnalysisCard title="Overall Assessment" analysis={predictionResult.analysis.likelihood_of_confusion} />}
-                            </div>
-                          </>
+                        {/* Display Likelihood of Confusion */}
+                        {typeof predictionResult.likelihood_of_confusion === 'boolean' && (
+                          <div className="space-y-4">
+                            <h3 className="text-xl font-semibold text-brand">Likelihood of Confusion</h3>
+                             <div className="bg-background p-4 rounded border border-white/10">
+                                <h4 className="font-medium text-base mb-1">Overall Assessment</h4>
+                                <p className="text-sm">{predictionResult.likelihood_of_confusion ? 'Yes' : 'No'}</p>
+                              </div>
+                          </div>
                         )}
                     </div>
                 )}
