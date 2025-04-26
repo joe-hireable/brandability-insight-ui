@@ -1,8 +1,10 @@
+
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, LogIn } from "lucide-react";
 import { useState } from "react";
+
 export const AuthDialog = ({
   children
 }: {
@@ -16,8 +18,8 @@ export const AuthDialog = ({
       <DialogContent className="sm:max-w-md">
         <div className="flex flex-col space-y-6 py-6">
           <div className="flex flex-col space-y-2 text-center">
-            <h3 className="bg-clip-text text-transparent bg-brand-gradient text-3xl">
-              {isLogin ? "Welcome back" : "Create an account"}
+            <h3 className="bg-clip-text text-transparent bg-brand-gradient text-heading-1 font-bold">
+              {isLogin ? "Welcome" : "Create an account"}
             </h3>
             <p className="text-text-secondary text-sm">
               {isLogin ? "Enter your credentials to access your account" : "Enter your details to create your account"}
