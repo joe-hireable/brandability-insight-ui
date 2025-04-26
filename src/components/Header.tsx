@@ -1,5 +1,5 @@
-
 import { Button } from "@/components/ui/button";
+import { AuthDialog } from "@/components/AuthDialog";
 
 export const Header = () => {
   return (
@@ -12,9 +12,11 @@ export const Header = () => {
             <span className="text-white">ABILITY</span>
           </span>
         </div>
-        <Button className="bg-brand-gradient text-white font-heading">
-          Sign up / Login
-        </Button>
+        <AuthDialog>
+          <Button className="bg-brand-gradient text-white font-heading">
+            Sign up / Login
+          </Button>
+        </AuthDialog>
       </div>
     </header>
   );
