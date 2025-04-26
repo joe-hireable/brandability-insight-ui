@@ -20,6 +20,9 @@ export default {
         "body-small": ["0.875rem", { lineHeight: "1.6" }],
       },
       colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
         brand: {
           gradient: {
             start: "#6c2a9b",
