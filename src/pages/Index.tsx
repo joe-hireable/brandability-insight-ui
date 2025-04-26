@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
+import { useNavigate } from "react-router-dom";
+
 const Index = () => {
+  const navigate = useNavigate();
+  
   return <div className="min-h-screen bg-background text-text-primary">
       <Header />
       
@@ -14,15 +18,14 @@ const Index = () => {
             </h1>
             <p className="font-body text-body-large text-text-secondary max-w-3xl mx-auto mb-8">Make informed decisions about trademark applications and opposition using advanced AI analysis of opposition cases, likelihood of confusion, and historical precedents.</p>
             <div className="flex gap-4 justify-center">
-              <Button className="bg-brand-gradient text-white font-heading px-8 py-6">
+              <Button 
+                className="bg-brand-gradient text-white font-heading px-8 py-6"
+                onClick={() => navigate("/opposition-prediction")}
+              >
                 Start
               </Button>
-              <Button variant="outline" className="border-2 border-transparent bg-clip-border hover:text-white font-heading px-8 py-6" style={{
-              backgroundImage: 'linear-gradient(238deg, rgba(108, 42, 155, 1) 0%, rgba(93, 83, 237, 1) 50%, rgba(83, 237, 229, 1) 100%)',
-              WebkitBackgroundClip: 'padding-box, border-box',
-              backgroundClip: 'padding-box, border-box',
-              backgroundOrigin: 'border-box'
-            }}>
+              <Button 
+                variant="secondary" className="font-heading px-8 py-6">
                 Learn More
               </Button>
             </div>
