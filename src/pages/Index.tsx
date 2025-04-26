@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 
@@ -23,13 +22,7 @@ const Index = () => {
               <Button className="bg-brand-gradient text-white font-heading px-8 py-6">
                 Start
               </Button>
-              <Button variant="outline" className="border-2 border-transparent bg-clip-border hover:text-white font-heading px-8 py-6"
-                style={{
-                  backgroundImage: 'linear-gradient(238deg, rgba(108, 42, 155, 1) 0%, rgba(93, 83, 237, 1) 50%, rgba(83, 237, 229, 1) 100%)',
-                  WebkitBackgroundClip: 'padding-box, border-box',
-                  backgroundClip: 'padding-box, border-box',
-                  backgroundOrigin: 'border-box',
-                }}>
+              <Button variant="secondary" className="font-heading px-8 py-6">
                 Learn More
               </Button>
             </div>
