@@ -1,5 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
+
 const Index = () => {
   return <div className="min-h-screen bg-background text-text-primary">
       <Header />
@@ -10,7 +12,7 @@ const Index = () => {
           <div className="text-center mb-24">
             <h1 className="font-heading font-bold text-heading-1 mb-6">
               <span className="bg-clip-text text-transparent bg-brand-gradient">Decision Intelligence</span>{" "}
-              Decision Intelligence for Trademark Lawyers
+              for Trademark Lawyers
             </h1>
             <p className="font-body text-body-large text-text-secondary max-w-3xl mx-auto mb-8">
               Make informed decisions about your trademark applications using advanced AI analysis
