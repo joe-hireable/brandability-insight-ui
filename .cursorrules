@@ -1,0 +1,80 @@
+# .cursorrules for trademark-frontend
+
+# 1. Directory & File Organization
+- All source code must reside in `src/`.
+- Use the following subfolders for organization:
+  - `components/` for reusable UI components.
+    - `components/ui/` for Shadcn UI and custom UI primitives.
+    - `components/common/` for shared layout (header, footer, etc).
+    - `components/[feature]/` for feature-specific components.
+  - `hooks/` for custom React hooks.
+  - `lib/` for utilities, helpers, and service logic.
+  - `pages/` for route-level components (if using file-based routing).
+  - `assets/` for static files (images, fonts, etc).
+- Use absolute imports with the `@` alias (configured in `tsconfig.json` and `vite.config.ts`).
+
+# 2. TypeScript
+- No usage of `any` type. Always define explicit types and interfaces.
+- Use discriminated unions and generics for reusable logic.
+- All API responses must have corresponding TypeScript types in `types/` or `lib/`.
+- Enable strict mode and noUnusedLocals/Parameters in `tsconfig.json`.
+
+# 3. React
+- Use only functional components and hooks (no class components).
+- Extract reusable logic into custom hooks in `hooks/`.
+- Use `useMemo`, `useCallback`, and `React.memo` for performance where appropriate.
+- Always use stable, unique keys for list rendering (never use array index as key).
+- Use Context API for shared state, colocate providers in `providers/` if present.
+
+# 4. State Management
+- Prefer local state (`useState`, `useReducer`) for component-specific logic.
+- Use TanStack Query for server state.
+- Use lightweight state libraries (Zustand, Jotai) for global state if needed.
+
+# 5. Styling
+- Use Tailwind CSS utility classes for all styling.
+- Organize Tailwind classes in the order: layout, spacing, sizing, typography, visual, interactive.
+- Use `@apply` in CSS modules for reusable component styles.
+- Extend Tailwind in `tailwind.config.js` for custom utilities and colors.
+- Use dark mode utilities where appropriate.
+
+# 6. Shadcn UI
+- Place all Shadcn UI components in `components/ui/`.
+- Customize Shadcn components to match your design system.
+- Compose complex components from simple primitives.
+
+# 7. Performance
+- Use code splitting with `React.lazy` and `Suspense` for large components/pages.
+- Optimize images (lazy loading, modern formats).
+- Analyze bundle size regularly (e.g., with rollup-plugin-visualizer).
+
+# 8. Testing
+- All components must have tests using React Testing Library and/or Vitest.
+- Place tests alongside components or in a `__tests__/` subfolder.
+- Use `@testing-library/jest-dom` for assertions.
+- Test user interactions, not implementation details.
+
+# 9. Deployment & CI/CD
+- All environment variables must be prefixed with `VITE_` and documented.
+- Production builds must use minification and remove console logs.
+- Use GitHub Actions for CI/CD, including install, test, build, and deploy steps.
+
+# 10. General
+- All code must be formatted with Prettier and checked with ESLint.
+- Write clear, descriptive commit messages.
+- Document all public APIs and complex logic with comments or JSDoc.
+- Ensure accessibility (a11y) for all interactive components.
+- Internationalization (i18n) should be considered from the start.
+
+# 11. Prohibited
+- No direct DOM manipulation (use refs or React APIs).
+- No usage of deprecated React APIs.
+- No hardcoded strings for UI text (use i18n).
+- No secrets or sensitive data in the codebase.
+
+# 12. Documentation
+- Maintain a README with setup, development, and deployment instructions.
+- Document custom components and utilities.
+- Consider using Storybook for UI documentation.
+
+# End of .cursorrules

@@ -1,8 +1,16 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "brandability",
+  "version": "0.0.1",
   "private": true,
-  "version": "0.0.0",
+  "description": "Decision intelligence for trademark lawyers.",
+  "repository": {
+    "type": "git",
+    "url": "brandability-insight-ui"
+  },
+  "license": "ISC",
+  "author": "Joe Brown",
   "type": "module",
+  "main": "eslint.config.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
