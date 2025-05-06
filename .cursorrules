@@ -1,80 +1,238 @@
-# .cursorrules for trademark-frontend
+rules:
+  - id: ai-and-human-readable
+    description: >
+      Optimise code, comments, docs, and commits for both humans and LLMs.
+      • Descriptive names, clear headings, full type hints.
+      • For Python: PEP 257 docstrings.
+      • For TS/JS: JSDoc for complex functions/hooks, clear interface/type descriptions.
+    enforcementLevel: high
 
-# 1. Directory & File Organization
-- All source code must reside in `src/`.
-- Use the following subfolders for organization:
-  - `components/` for reusable UI components.
-    - `components/ui/` for Shadcn UI and custom UI primitives.
-    - `components/common/` for shared layout (header, footer, etc).
-    - `components/[feature]/` for feature-specific components.
-  - `hooks/` for custom React hooks.
-  - `lib/` for utilities, helpers, and service logic.
-  - `pages/` for route-level components (if using file-based routing).
-  - `assets/` for static files (images, fonts, etc).
-- Use absolute imports with the `@` alias (configured in `tsconfig.json` and `vite.config.ts`).
+  - id: project-goal
+    description: >
+      Changes must advance the stated objective in strategy.md:
+      "Provide a user-friendly and responsive web interface for trademark lawyers to input trademark details, receive AI-powered opposition predictions, and analyze potential conflicts."
+    enforcementLevel: high
 
-# 2. TypeScript
-- No usage of `any` type. Always define explicit types and interfaces.
-- Use discriminated unions and generics for reusable logic.
-- All API responses must have corresponding TypeScript types in `types/` or `lib/`.
-- Enable strict mode and noUnusedLocals/Parameters in `tsconfig.json`.
+  - id: code-style-and-formatting
+    description: >
+      Adhere to established code style and formatting.
+      • JS/TS: ESLint rules (as defined in `eslint.config.js`) and Prettier for formatting. Run `npm run lint` or `bun run lint` to check.
+      • Ensure imports are grouped: 1. React/Next/framework, 2. External libraries, 3. Internal modules/aliases (`@/components`, etc.), 4. Relative imports. Separate groups with a blank line.
+    enforcementLevel: high
 
-# 3. React
-- Use only functional components and hooks (no class components).
-- Extract reusable logic into custom hooks in `hooks/`.
-- Use `useMemo`, `useCallback`, and `React.memo` for performance where appropriate.
-- Always use stable, unique keys for list rendering (never use array index as key).
-- Use Context API for shared state, colocate providers in `providers/` if present.
+  - id: hardware-constraints
+    description: >
+      Respect any limits stated in strategy.md (e.g., modern web browsers, reasonable client-side processing).
+      The application must remain performant on typical user devices.
+    enforcementLevel: high
 
-# 4. State Management
-- Prefer local state (`useState`, `useReducer`) for component-specific logic.
-- Use TanStack Query for server state.
-- Use lightweight state libraries (Zustand, Jotai) for global state if needed.
+  - id: typescript-best-practices
+    description: >
+      Leverage TypeScript for robust and maintainable code.
+      • **Strict Typing:** Avoid `any` where possible. Use `unknown` for uncertain types and perform type checking.
+      • **Explicit Types:** Define clear interfaces and types for props, state, API responses, and complex objects. Store shared types in `src/types/`.
+      • **Readonly Props:** Use `Readonly<T>` or `readonly` modifiers for props where appropriate to enforce immutability.
+      • **Discriminated Unions:** Use for modeling state or variants clearly.
+    enforcementLevel: high
 
-# 5. Styling
-- Use Tailwind CSS utility classes for all styling.
-- Organize Tailwind classes in the order: layout, spacing, sizing, typography, visual, interactive.
-- Use `@apply` in CSS modules for reusable component styles.
-- Extend Tailwind in `tailwind.config.js` for custom utilities and colors.
-- Use dark mode utilities where appropriate.
+  - id: react-component-design
+    description: >
+      Follow best practices for React component development.
+      • **Functional Components & Hooks:** Exclusively use functional components and React Hooks. No class components.
+      • **Single Responsibility Principle (SRP):** Components should ideally do one thing well. Break down complex components.
+      • **Reusability:** Design components for reusability. Abstract common UI patterns into generic components (e.g., in `src/components/ui/` or `src/components/common/`).
+      • **Props:** Keep prop interfaces clear and minimal. Use object destructuring for props. Provide default props where sensible.
+      • **Keys:** Always use stable, unique keys for list rendering (never array indices for dynamic lists).
+    enforcementLevel: high
 
-# 6. Shadcn UI
-- Place all Shadcn UI components in `components/ui/`.
-- Customize Shadcn components to match your design system.
-- Compose complex components from simple primitives.
+  - id: state-management-strategy
+    description: >
+      Follow the established state management strategy.
+      • **Server State:** Use TanStack Query (`@tanstack/react-query`) for all server state management (fetching, caching, updating, optimistic updates). Define query keys clearly.
+      • **Global Client State:** For complex global client state beyond simple prop drilling or Context, consult `strategy.md` or ask before introducing new libraries (e.g., Zustand, Jotai).
+      • **Local Component State:** Use `useState` and `useReducer` for local component state.
+      • **Context API:** Use React Context for theming, authentication (`AuthContext`), or other slowly changing global data. Ensure providers are placed appropriately.
+    enforcementLevel: high
 
-# 7. Performance
-- Use code splitting with `React.lazy` and `Suspense` for large components/pages.
-- Optimize images (lazy loading, modern formats).
-- Analyze bundle size regularly (e.g., with rollup-plugin-visualizer).
+  - id: react-hooks-usage
+    description: >
+      Utilize React Hooks effectively.
+      • **Custom Hooks:** Extract reusable non-visual logic into custom hooks in `src/hooks/`.
+      • **Memoization:** Use `useMemo` and `useCallback` judiciously to optimize performance for computationally expensive operations or to prevent unnecessary re-renders, especially with complex components or large lists.
+      • **`useEffect`:** Ensure `useEffect` dependencies are correctly specified. Clean up side effects (subscriptions, timers) in the return function.
+    enforcementLevel: medium
 
-# 8. Testing
-- All components must have tests using React Testing Library and/or Vitest.
-- Place tests alongside components or in a `__tests__/` subfolder.
-- Use `@testing-library/jest-dom` for assertions.
-- Test user interactions, not implementation details.
+  - id: styling-and-ui-components
+    description: >
+      Maintain consistency in styling and UI component usage.
+      • **Tailwind CSS:** Primarily use Tailwind CSS utility classes. Follow conventions outlined in `tailwind.config.ts` and `src/index.css`.
+      • **shadcn/ui:** Leverage `shadcn/ui` components from `src/components/ui/`. Customize them as needed via `components.json` or local overrides.
+      • **Semantic HTML:** Use semantic HTML elements for accessibility and clarity.
+    enforcementLevel: high
 
-# 9. Deployment & CI/CD
-- All environment variables must be prefixed with `VITE_` and documented.
-- Production builds must use minification and remove console logs.
-- Use GitHub Actions for CI/CD, including install, test, build, and deploy steps.
+  - id: api-interaction-and-types
+    description: >
+      Ensure robust and typed API interactions.
+      • **SSoT for API Types:** `src/types/trademark.ts` is the Single Source of Truth for backend API request/response shapes. Keep it synchronized with backend Pydantic models.
+      • **Typed API Calls:** All functions making API calls (e.g., in `src/lib/api.ts`) must use these defined types.
+      • **Loading & Error States:** Implement clear loading indicators and user-friendly error messages for all asynchronous operations.
+    enforcementLevel: high
 
-# 10. General
-- All code must be formatted with Prettier and checked with ESLint.
-- Write clear, descriptive commit messages.
-- Document all public APIs and complex logic with comments or JSDoc.
-- Ensure accessibility (a11y) for all interactive components.
-- Internationalization (i18n) should be considered from the start.
+  - id: test-driven-development-frontend
+    description: >
+      Write/adjust tests before or with code changes.
+      • **Testing Tools:** Use Vitest and React Testing Library.
+      • **Coverage:** Aim for ≥70 % coverage for critical components, hooks, and utility functions. Focus on testing behavior, not implementation details.
+      • **Test Location:** Place tests alongside the files they test (e.g., `MyComponent.test.tsx` next to `MyComponent.tsx`) or in `__tests__` subdirectories.
+    enforcementLevel: medium
 
-# 11. Prohibited
-- No direct DOM manipulation (use refs or React APIs).
-- No usage of deprecated React APIs.
-- No hardcoded strings for UI text (use i18n).
-- No secrets or sensitive data in the codebase.
+  - id: accessibility-a11y
+    description: >
+      Design and build with accessibility in mind from the start.
+      • **WCAG Compliance:** Strive for WCAG 2.1 Level AA compliance.
+      • **Semantic HTML & ARIA:** Use appropriate ARIA attributes when semantic HTML is insufficient.
+      • **Keyboard Navigation:** Ensure all interactive elements are keyboard accessible and focus indicators are visible.
+      • **Screen Reader Compatibility:** Test with screen readers periodically if possible.
+    enforcementLevel: medium
 
-# 12. Documentation
-- Maintain a README with setup, development, and deployment instructions.
-- Document custom components and utilities.
-- Consider using Storybook for UI documentation.
+  - id: performance-considerations
+    description: >
+      Optimize for frontend performance.
+      • **Code Splitting:** Utilize `React.lazy` and `Suspense` for route-based or component-based code splitting for larger parts of the application.
+      • **Bundle Size:** Be mindful of bundle size. Analyze with tools like `vite-plugin-visualizer` if performance issues arise.
+      • **Image Optimization:** Use appropriate image formats and consider lazy loading for off-screen images.
+    enforcementLevel: medium
 
-# End of .cursorrules
+  - id: dependency-management
+    description: >
+      Manage external dependencies responsibly.
+      • **Justification:** New third-party dependencies must be justified (lightweight, well-maintained, solves a clear problem not easily addressed by existing stack or Web APIs). Log significant additions in `strategy.md`.
+      • **Version Control:** Keep dependencies up-to-date where feasible, testing thoroughly after upgrades.
+    enforcementLevel: medium
+
+  - id: directory-and-file-organization
+    description: >
+      Maintain the established directory structure as outlined in `frontend-gitingest.txt`'s `src/.cursorrules` or `strategy.md`.
+      • `src/components/ui/` for shadcn/ui primitives.
+      • `src/components/` for reusable application components (categorize further if needed).
+      • `src/hooks/` for custom React hooks.
+      • `src/lib/` for utilities, API services, Firebase config.
+      • `src/pages/` for route components.
+      • `src/contexts/` for React Context providers.
+      • `src/types/` for shared TypeScript types/interfaces.
+      • Use absolute imports with `@/*` alias.
+    enforcementLevel: high
+
+  - id: error-handling-and-logging
+    description: >
+      Implement robust error handling.
+      • **User Feedback:** Provide clear, non-technical error messages to the user.
+      • **Console Logging:** Use `console.error` for critical client-side errors, `console.warn` for recoverable issues, and `console.log/debug` sparingly for development.
+      • **Error Boundaries:** Consider using React Error Boundaries for catching rendering errors in component subtrees.
+    enforcementLevel: medium
+
+  - id: ask-questions-proactively
+    description: >
+      Clarify ambiguities before writing significant code. If a design or requirement is unclear, ask for more details.
+    enforcementLevel: high
+
+  - id: maintain-strategy-md
+    description: >
+      Keep strategy.md up-to-date with significant decisions, task status changes, and new blockers.
+    enforcementLevel: high
+
+  - id: reset-command
+    description: >
+      If **RESET** appears in the prompt:
+      1. Finish any other instructions first (unless told otherwise).
+      2. Start a fresh session (indicate this clearly).
+      3. Confirm that `strategy.md` & `starter-prompt.md` are up-to-date or ask for them to be updated before proceeding with new tasks.
+    enforcementLevel: high
+
+  - id: model-context-non-code
+    description: >
+      Files under `model-context/` are informational only (e.g., ingested file trees, prior conversation snippets).
+      Do **not** import from or execute code within `model-context/` unless a file from this directory is explicitly attached by the user in the current chat turn for direct processing.
+    enforcementLevel: high
+
+  - id: prefer-native-browser-apis-over-extra-dependencies
+    description: >
+      Use built-in Web APIs (e.g., Fetch API, URL, Intl) before adding new packages for common tasks. Evaluate trade-offs if a library offers significant advantages.
+    enforcementLevel: medium
+
+  - id: cursor-agent-workflow
+    description: >
+      **Cursor LLM Task Resolution Protocol:**
+
+      *   **Task Persistence:** Continue working on the user's task until explicitly 
+          completed. Do not end your response until the user's query is fully resolved
+          or you've received clear confirmation to stop.
+
+      *   **Cursor-Specific Tools Usage:**
+          *   **File Reading:** Use `read_file` tool when you need to examine file 
+              contents. Never guess file structures or code implementations.
+          *   **Codebase Search:** Use `codebase_search` tool first for exploring 
+              unknown parts of the codebase with semantic queries.
+          *   **Directory Exploration:** Use `list_dir` tool to understand project 
+              structure before diving into specific files.
+          *   **Web Search:** Use `web_search` tool for current documentation,
+              library references, or when understanding external concepts.
+          *   **Grep Search:** Use `grep_search` tool for finding exact text matches 
+              or patterns across files (regex-based).
+          *   **File Search:** Use `file_search` tool when you need to locate specific 
+              files but don't know their exact location.
+
+      *   **Deliberate Reasoning Process:**
+          *   Before calling any tool, explicitly state what information you're looking 
+              for and why it's needed for the current task.
+          *   After each tool result, summarize what you learned and how it affects your 
+              approach to solving the problem.
+          *   For complex problems, break down your approach into clear steps before 
+              executing them.
+          *   When examining code, identify patterns, dependencies, and potential 
+              side-effects before suggesting changes.
+          *   Remember: using a sequence of tool calls without intermediate analysis 
+              leads to incomplete understanding and poor solutions.
+
+      *   **Context Management:**
+          *   Maintain awareness of what you've already explored in the codebase.
+          *   Reference specific line numbers and file paths when discussing code.
+          *   Track visited files and remember key insights about the codebase structure.
+          *   For complex requests, create a temporary plan and track progress against it.
+
+      *   **User Interaction:**
+          *   Ask specific clarifying questions when requirements are ambiguous.
+          *   Present multiple options with trade-offs when the optimal approach is unclear.
+          *   Provide concise explanations for your reasoning and recommendations.
+    enforcementLevel: high
+
+indexing:
+  # Core source code for understanding application logic and UI
+  - "src/**/*.ts"
+  - "src/**/*.tsx"
+
+  # Configuration files critical for understanding project setup and behavior
+  - "vite.config.ts"
+  - "tailwind.config.ts"
+  - "tsconfig.json"
+  - "tsconfig.app.json"
+  - "tsconfig.node.json"
+  - "components.json" # shadcn/ui config
+  - "eslint.config.js"
+  - "package.json" # Dependencies and scripts
+  - "firebase.json" # Deployment config
+
+  # Key documentation and strategy files
+  - "README.md"
+  - "strategy.md" # If present in the root
+  - ".cursorrules" # This file itself
+
+  # Public assets are generally less critical for code understanding, but index.html is important
+  - "index.html"
+  # - "public/**/*" # Uncomment if specific public assets become highly relevant context
+
+  # Exclude common large, less relevant directories by default (beyond .gitignore)
+  # - "!node_modules/**" # Already handled by Cursor default ignore + .gitignore
+  # - "!dist/**" # Build output
+  # - "!.firebase/**" # Firebase cache
+  # - "!coverage/**" # Test coverage reports

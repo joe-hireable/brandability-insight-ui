@@ -10,11 +10,22 @@ import {
   PredictionRequest as ApiPredictionRequest,
   CasePrediction,
   GoodOrService as ApiGoodOrService,
-  TrademarkMark as ApiTrademarkMark
+  TrademarkMark as ApiTrademarkMark,
+  MarkSimilarityOutput,
+  GoodServiceLikelihoodOutput,
+  CasePredictionResult,
+  GsSimilarityRequest,
+  MarkSimilarityRequest,
+  CasePredictionRequest
 } from "@/types/trademark";
 import { useTrademarkPrediction } from "@/hooks/useTrademarkPrediction";
+import { useMarkSimilarity } from "@/hooks/useMarkSimilarity";
+import { useGoodServiceSimilarity, useBatchGoodServiceSimilarity } from "@/hooks/useGoodServiceSimilarity";
+import { useCasePrediction } from "@/hooks/useCasePrediction";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { GoodsServicesComparisonDisplay } from "@/components/GoodsServicesComparisonDisplay";
 
 // Local types for state (similar to original, but using Api types)
 interface GoodServiceState extends Omit<ApiGoodOrService, 'nice_class'> {
@@ -47,9 +58,39 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ title, analysis }) => (
     </div>
 );
 
+// --- Helper function to get severity color for similarity ---
+const getSimilaritySeverityColor = (similarity: MarkSimilarityOutput['overall'] | undefined): string => {
+  if (!similarity) return 'text-slate-400'; // Default/unknown
+  switch (similarity) {
+    case 'identical':
+      return 'text-red-500';
+    case 'high':
+      return 'text-orange-500';
+    case 'moderate':
+      return 'text-yellow-500';
+    case 'low':
+      return 'text-green-500';
+    case 'dissimilar':
+      return 'text-sky-500';
+    default:
+      return 'text-slate-400';
+  }
+};
+
+const getScoreSeverityColor = (score: number | undefined): string => {
+  if (score === undefined) return 'text-slate-400';
+  if (score >= 0.8) return 'text-red-500'; // High similarity/LoC
+  if (score >= 0.6) return 'text-orange-500'; // Moderate-high
+  if (score >= 0.4) return 'text-yellow-500'; // Moderate
+  if (score >= 0.2) return 'text-green-500'; // Low
+  return 'text-sky-500'; // Very Low/Dissimilar
+};
+
 // --- Component ---
 const OppositionPrediction = () => {
   const navigate = useNavigate();
+  
+  // Legacy prediction hook (deprecated)
   const {
     mutate: predict,
     data: predictionResult,
@@ -57,6 +98,22 @@ const OppositionPrediction = () => {
     error: predictionError,
     reset: resetMutation,
   } = useTrademarkPrediction();
+
+  // New multi-step prediction hooks
+  const markSimilarityMutation = useMarkSimilarity();
+  const goodServiceSimilarityMutation = useGoodServiceSimilarity();
+  const batchGoodServiceSimilarityMutation = useBatchGoodServiceSimilarity();
+  const casePredictionMutation = useCasePrediction();
+
+  // New state for multi-step prediction
+  const [markSimilarity, setMarkSimilarity] = useState<MarkSimilarityOutput | null>(null);
+  const [goodsServiceLikelihoods, setGoodsServiceLikelihoods] = useState<GoodServiceLikelihoodOutput[]>([]);
+  const [predictionResultNew, setPredictionResultNew] = useState<CasePredictionResult | null>(null);
+  
+  // Track the current step and overall loading state
+  const [currentStep, setCurrentStep] = useState<number>(0); // 0: Not started, 1: Mark similarity, 2: G/S similarity, 3: Case prediction
+  const [isLoadingMultiStep, setIsLoadingMultiStep] = useState<boolean>(false);
+  const [predictionErrorNew, setPredictionErrorNew] = useState<Error | null>(null);
 
   // Restore useState for form management
   const [request, setRequest] = useState<PredictionRequestState>({
@@ -170,11 +227,19 @@ const OppositionPrediction = () => {
      return true;
  };
 
- // --- Modified Submit Handler ---
-  const handleSubmit = (event: React.FormEvent) => {
+  // --- Multi-step API handling ---
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault(); // Prevent default form submission
     setFormError(""); // Clear previous form errors
     resetMutation(); // Clear previous API results/errors
+    
+    // Reset all prediction state
+    setMarkSimilarity(null);
+    setGoodsServiceLikelihoods([]);
+    setPredictionResultNew(null);
+    setPredictionErrorNew(null);
+    setCurrentStep(0);
+    setIsLoadingMultiStep(false);
 
     // Perform validation
     if (!isFormValid()) {
@@ -198,38 +263,115 @@ const OppositionPrediction = () => {
         return;
     }
 
-    // Construct payload from state, ensuring types match ApiPredictionRequest
     try {
-        const requestPayload: ApiPredictionRequest = {
+        // Start loading state
+        setIsLoadingMultiStep(true);
+        
+        // STEP 1: Get mark similarity
+        setCurrentStep(1);
+        
+        const markSimilarityRequest: MarkSimilarityRequest = {
             applicant: {
                 wordmark: request.applicant.wordmark,
                 is_registered: false,
             },
             opponent: {
                 wordmark: request.opponent.wordmark,
-                is_registered: !!request.opponent.is_registered, // Ensure boolean
+                is_registered: !!request.opponent.is_registered,
                 ...(request.opponent.is_registered && { registration_number: request.opponent.registration_number })
-            },
-            applicant_goods: request.applicant_goods.map(g => ({
-                term: g.term,
-                nice_class: parseInt(String(g.nice_class), 10) // Parse to int
-            })),
-            opponent_goods: request.opponent_goods.map(g => ({
-                term: g.term,
-                nice_class: parseInt(String(g.nice_class), 10) // Parse to int
-            })),
+            }
         };
+        
+        const markSimilarityResult = await markSimilarityMutation.mutateAsync(markSimilarityRequest);
+        setMarkSimilarity(markSimilarityResult);
+        
+        // STEP 2: Compare each goods/services pair
+        setCurrentStep(2);
+        
+        // Prepare properly formatted goods/services
+        const applicantGoods = request.applicant_goods.map(good => ({
+            term: good.term,
+            nice_class: parseInt(String(good.nice_class), 10)
+        }));
 
-        console.log("Submitting prediction request payload:", requestPayload);
-        predict(requestPayload); // Call the mutation
+        const opponentGoods = request.opponent_goods.map(good => ({
+            term: good.term,
+            nice_class: parseInt(String(good.nice_class), 10)
+        }));
 
+        // Use batch API to process all goods/services at once
+        const gsResults = await batchGoodServiceSimilarityMutation.mutateAsync({
+            applicantGoods,
+            opponentGoods,
+            markSimilarity: markSimilarityResult
+        });
+
+        // Create a mapping for easier access to original terms
+        const resultMapping = [];
+        let resultIndex = 0;
+
+        // Map original request data back to results for display
+        applicantGoods.forEach(applicantGood => {
+            opponentGoods.forEach(opponentGood => {
+                resultMapping.push({
+                    applicantGood,
+                    opponentGood
+                });
+                resultIndex++;
+            });
+        });
+
+        // Enhance results with original terms for display
+        const enhancedGsResults = gsResults.map((result, index) => {
+            // Preserve the original applicant and opponent goods data from the mapping
+            return {
+                ...result,
+                applicant_good: {
+                    ...result.applicant_good,
+                    term: resultMapping[index].applicantGood.term,
+                    nice_class: resultMapping[index].applicantGood.nice_class
+                },
+                opponent_good: {
+                    ...result.opponent_good,
+                    term: resultMapping[index].opponentGood.term,
+                    nice_class: resultMapping[index].opponentGood.nice_class
+                }
+            };
+        });
+
+        console.log("Enhanced Goods/Services results:", JSON.stringify(enhancedGsResults, null, 2));
+        setGoodsServiceLikelihoods(enhancedGsResults);
+        
+        // STEP 3: Get case prediction
+        setCurrentStep(3);
+        
+        const casePredictionRequest: CasePredictionRequest = {
+            mark_similarity: markSimilarityResult,
+            goods_services_likelihoods: enhancedGsResults  // Use the enhanced results here
+        };
+        
+        const caseResult = await casePredictionMutation.mutateAsync(casePredictionRequest);
+        
+        // Ensure the final result preserves our enhanced goods/services data
+        const enhancedCaseResult = {
+            ...caseResult,
+            goods_services_likelihoods: enhancedGsResults
+        };
+        
+        console.log("Final prediction result:", JSON.stringify(enhancedCaseResult, null, 2));
+        setPredictionResultNew(enhancedCaseResult);
+        
+        // Clear loading states
+        setIsLoadingMultiStep(false);
+        
     } catch (error) {
-        console.error("Error constructing payload:", error);
-        setFormError("An unexpected error occurred preparing the data.");
+        console.error("Prediction error:", error);
+        setPredictionErrorNew(error as Error);
+        setIsLoadingMultiStep(false);
     }
   };
 
-  // --- Restore Clear Handler ---
+  // --- Updated Clear Handler ---
   const handleClearAll = () => {
     setRequest({
       applicant: { wordmark: "", is_registered: false },
@@ -239,6 +381,14 @@ const OppositionPrediction = () => {
     });
     setFormError("");
     resetMutation();
+    
+    // Reset multi-step prediction state
+    setMarkSimilarity(null);
+    setGoodsServiceLikelihoods([]);
+    setPredictionResultNew(null);
+    setPredictionErrorNew(null);
+    setCurrentStep(0);
+    setIsLoadingMultiStep(false);
   };
 
   // Restore getError (basic version, just returns the single formError)
@@ -473,17 +623,17 @@ const OppositionPrediction = () => {
                 type="button"
                 variant="outline"
                 onClick={handleClearAll}
-                disabled={isLoading}
+                disabled={isLoading || isLoadingMultiStep}
                 className="px-8 text-white border-white/20 hover:bg-surface"
               >
                 Clear All
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading || !isFormValid()}
+                disabled={isLoading || isLoadingMultiStep || !isFormValid()}
                 className="w-full sm:w-auto bg-brand-gradient text-white hover:opacity-90 transition-opacity px-8 py-3"
               >
-                {isLoading ? (
+                {isLoading || isLoadingMultiStep ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Analysing...
@@ -495,29 +645,73 @@ const OppositionPrediction = () => {
             </div>
           </form>
 
-          {(isLoading || predictionError || predictionResult) && (
+          {/* New Results Section */}
+          {(isLoadingMultiStep || predictionErrorNew || predictionResultNew || markSimilarity || goodsServiceLikelihoods.length > 0) && (
              <div className="mt-10">
                  <Separator className="mb-6 bg-white/20" />
                  <h2 className="font-heading text-2xl mb-4">Analysis Results</h2>
 
-                 {isLoading && (
-                    <div className="flex items-center justify-center p-8 bg-[#131722]/50 rounded-lg border border-white/10">
-                        <Loader2 className="mr-3 h-6 w-6 animate-spin text-brand" />
-                        <p className="text-text-secondary">Running analysis, please wait...</p>
-                     </div>
+                 {/* Loading States for Multi-step Process */}
+                 {isLoadingMultiStep && (
+                    <div className="flex flex-col items-center justify-center p-8 bg-[#131722]/50 rounded-lg border border-white/10">
+                        <Loader2 className="h-8 w-8 animate-spin text-brand mb-4" />
+                        <p className="text-text-secondary text-lg font-medium mb-2">
+                            {currentStep === 1 && "Analyzing trademark similarity..."}
+                            {currentStep === 2 && "Comparing goods and services..."}
+                            {currentStep === 3 && "Generating final prediction..."}
+                        </p>
+                        <div className="w-full max-w-md bg-white/10 h-2 rounded-full mt-2">
+                            <div 
+                                className="bg-brand-gradient h-2 rounded-full transition-all duration-300" 
+                                style={{ width: `${(currentStep / 3) * 100}%` }}
+                            ></div>
+                        </div>
+                    </div>
                  )}
 
-                {predictionError && !isLoading && (
+                {/* Error State */}
+                {predictionErrorNew && !isLoadingMultiStep && (
                      <Alert variant="destructive">
                          <AlertTitle>API Error</AlertTitle>
                          <AlertDescription>
-                             {predictionError.message || "An unknown error occurred during prediction."}
+                             {predictionErrorNew.message || "An unknown error occurred during prediction."}
                          </AlertDescription>
                      </Alert>
                  )}
 
-                {/* Updated Rendering Logic */}
-                {predictionResult && !isLoading && !predictionError && (
+                {/* Results Display - New API Structure */}
+                {!isLoadingMultiStep && !predictionErrorNew && (
+                    <div className="space-y-6 bg-[#131722] rounded-lg border border-white/10 p-6">
+                        {/* Overall Opposition Outcome */}
+                        {predictionResultNew?.opposition_outcome && (
+                          <Card className="bg-background/70 border-border">
+                            <CardHeader>
+                              <CardTitle>Overall Opposition Outcome</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                              <p className="text-lg font-semibold">
+                                Result: <span className={`font-bold ${
+                                  predictionResultNew.opposition_outcome.result.includes("fail") ? 'text-green-500' : 
+                                  predictionResultNew.opposition_outcome.result.includes("partially succeed") ? 'text-yellow-500' : 'text-red-500'
+                                }`}>
+                                  {predictionResultNew.opposition_outcome.result}
+                                </span>
+                              </p>
+                              <p>Confidence: <span className="font-semibold text-brand">{(predictionResultNew.opposition_outcome.confidence * 100).toFixed(0)}%</span></p>
+                              <p className="text-sm text-text-secondary">{predictionResultNew.opposition_outcome.reasoning}</p>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Insert Goods/Services Comparison Display HERE */}
+                        {goodsServiceLikelihoods && goodsServiceLikelihoods.length > 0 && (
+                          <GoodsServicesComparisonDisplay goodsServiceLikelihoods={goodsServiceLikelihoods} />
+                        )}
+                    </div>
+                )}
+                
+                {/* Legacy Results Section - Will be removed after migration */}
+                {predictionResult && !isLoading && !predictionError && !predictionResultNew && (
                     <div className="space-y-6 bg-[#131722] rounded-lg border border-white/10 p-6">
                         {/* Use opposition_outcome */}
                         {predictionResult.opposition_outcome && (
@@ -533,46 +727,71 @@ const OppositionPrediction = () => {
                           </Alert>
                         )}
 
-                        {/* Display Mark Comparison */}
-                        {predictionResult.mark_comparison && (
+                        {/* Display Mark Similarity (previously mark_comparison) */}
+                        {predictionResult.mark_similarity && (
                           <div className="space-y-4">
                             <h3 className="text-xl font-semibold text-brand">Mark Comparison</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               {/* Directly display string values - Replace AnalysisCard */}
                               <div className="bg-background p-4 rounded border border-white/10">
                                 <h4 className="font-medium text-base mb-1">Visual Similarity</h4>
-                                <p className="text-sm capitalize">{predictionResult.mark_comparison.visual || 'N/A'}</p>
+                                <p className="text-sm capitalize">{predictionResult.mark_similarity.visual || 'N/A'}</p>
                               </div>
                               <div className="bg-background p-4 rounded border border-white/10">
                                 <h4 className="font-medium text-base mb-1">Aural Similarity</h4>
-                                <p className="text-sm capitalize">{predictionResult.mark_comparison.aural || 'N/A'}</p>
+                                <p className="text-sm capitalize">{predictionResult.mark_similarity.aural || 'N/A'}</p>
                               </div>
                               <div className="bg-background p-4 rounded border border-white/10">
                                 <h4 className="font-medium text-base mb-1">Conceptual Similarity</h4>
-                                <p className="text-sm capitalize">{predictionResult.mark_comparison.conceptual || 'N/A'}</p>
+                                <p className="text-sm capitalize">{predictionResult.mark_similarity.conceptual || 'N/A'}</p>
                               </div>
                                <div className="bg-background p-4 rounded border border-white/10">
                                 <h4 className="font-medium text-base mb-1">Overall Mark Similarity</h4>
-                                <p className="text-sm capitalize">{predictionResult.mark_comparison.overall || 'N/A'}</p>
+                                <p className="text-sm capitalize">{predictionResult.mark_similarity.overall || 'N/A'}</p>
                               </div>
                             </div>
                           </div>
                         )}
 
-                        {/* TODO: Display Goods & Services Comparisons list (predictionResult.goods_services_comparisons) */}
-                         {/* <div className="space-y-4">
-                            <h3 className="text-xl font-semibold text-brand">Goods & Services Comparison</h3>
-                             <AnalysisCard title="Overall Similarity" analysis={predictionResult.analysis.goods_services_comparison.overall_similarity} />
-                         </div> */}
-
-                        {/* Display Likelihood of Confusion */}
-                        {typeof predictionResult.likelihood_of_confusion === 'boolean' && (
+                        {/* Display Goods & Services with likelihood of confusion */}
+                        {predictionResult.goods_services_likelihoods && predictionResult.goods_services_likelihoods.length > 0 && (
                           <div className="space-y-4">
-                            <h3 className="text-xl font-semibold text-brand">Likelihood of Confusion</h3>
-                             <div className="bg-background p-4 rounded border border-white/10">
-                                <h4 className="font-medium text-base mb-1">Overall Assessment</h4>
-                                <p className="text-sm">{predictionResult.likelihood_of_confusion ? 'Yes' : 'No'}</p>
-                              </div>
+                            <h3 className="text-xl font-semibold text-brand">Goods & Services with Likelihood of Confusion</h3>
+                            <div className="space-y-4">
+                              {predictionResult.goods_services_likelihoods
+                                .filter(gs => gs && gs.likelihood_of_confusion)
+                                .map((gs, index) => (
+                                  <div key={index} className="bg-background p-4 rounded border border-white/10">
+                                    <div className="flex flex-col md:flex-row justify-between gap-2 mb-3">
+                                      <div className="flex-1">
+                                        <h5 className="text-xs uppercase text-text-secondary mb-1">Applicant</h5>
+                                        <p className="text-sm">
+                                          {gs?.applicant_good?.term || '[No term]'} 
+                                          {gs?.applicant_good?.nice_class ? ` (Class ${gs?.applicant_good?.nice_class})` : ''}
+                                        </p>
+                                      </div>
+                                      <div className="flex-1">
+                                        <h5 className="text-xs uppercase text-text-secondary mb-1">Opponent</h5>
+                                        <p className="text-sm">
+                                          {gs?.opponent_good?.term || '[No term]'} 
+                                          {gs?.opponent_good?.nice_class ? ` (Class ${gs?.opponent_good?.nice_class})` : ''}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <h5 className="text-xs uppercase text-text-secondary mb-1">Confusion Type</h5>
+                                      <p className="text-sm text-red-500 font-medium">
+                                        {gs?.confusion_type ? gs.confusion_type : 'General'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))
+                              }
+                              {!predictionResult.goods_services_likelihoods || 
+                                predictionResult.goods_services_likelihoods.filter(gs => gs && gs.likelihood_of_confusion).length === 0 && (
+                                <p className="text-sm">No likelihood of confusion found between goods and services.</p>
+                              )}
+                            </div>
                           </div>
                         )}
                     </div>

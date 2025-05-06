@@ -1,6 +1,6 @@
 import { useMutation, UseMutationOptions } from "@tanstack/react-query";
 import { predictTrademarkOpposition } from "@/lib/api";
-import { PredictionRequest, CasePrediction } from "@/types/trademark";
+import { PredictionRequest, CasePredictionResult } from "@/types/trademark";
 
 // Define the type for the error, which is likely an Error object
 type PredictionError = Error;
@@ -8,21 +8,22 @@ type PredictionError = Error;
 // Define options type if you want to allow customizing mutation behavior from the component
 type UseTrademarkPredictionOptions = Omit<
   UseMutationOptions<
-    CasePrediction, // Type of data returned on success
-    PredictionError,  // Type of error
-    PredictionRequest // Type of variables passed to the mutation function
+    CasePredictionResult, // Updated return type (was CasePrediction)
+    PredictionError,
+    PredictionRequest
   >,
   'mutationFn' // Exclude mutationFn as we provide it
 >;
 
 /**
  * Custom hook to manage the trademark opposition prediction API call using TanStack Query.
+ * @deprecated Use the new modular hooks instead: useMarkSimilarity, useGoodServiceSimilarity, useCasePrediction
  *
  * @param options Optional configuration for the useMutation hook.
  * @returns The mutation object from TanStack Query, including state like `mutate`, `isPending`, `isError`, `error`, `data`.
  */
 export const useTrademarkPrediction = (options?: UseTrademarkPredictionOptions) => {
-  return useMutation<CasePrediction, PredictionError, PredictionRequest>({
+  return useMutation<CasePredictionResult, PredictionError, PredictionRequest>({
     mutationFn: predictTrademarkOpposition, // The function that performs the API call
     // You can add default options here if needed, e.g.:
     // gcTime: 300000, // Cache time for the mutation result (5 minutes)

@@ -60,6 +60,7 @@ export interface OppositionOutcome {
 /**
  * Complete trademark opposition case prediction including all comparisons.
  * Matches Python: CasePrediction
+ * @deprecated Use CasePredictionResult instead
  */
 export interface CasePrediction {
   mark_comparison: MarkComparison;
@@ -78,6 +79,75 @@ export interface PredictionRequest {
   opponent: TrademarkMark;
   applicant_goods: GoodOrService[]; // Pydantic max_length is runtime validation, not TS type
   opponent_goods: GoodOrService[]; // Pydantic max_length is runtime validation, not TS type
+}
+
+// --- New Interfaces for Refactored API ---
+
+/**
+ * Request model for mark similarity assessment.
+ */
+export interface MarkSimilarityRequest {
+  applicant: TrademarkMark;
+  opponent: TrademarkMark;
+}
+
+/**
+ * Response model for mark similarity assessment.
+ */
+export interface MarkSimilarityOutput {
+  visual: MarkSimilarityEnum;
+  aural: MarkSimilarityEnum;
+  conceptual: MarkSimilarityEnum;
+  overall: MarkSimilarityEnum;
+  reasoning?: string; // Optional LLM reasoning
+}
+
+/**
+ * Response model for goods/services likelihood of confusion assessment.
+ */
+export interface GoodServiceLikelihoodOutput {
+  applicant_good: GoodOrService;
+  opponent_good: GoodOrService;
+  are_competitive: boolean;
+  are_complementary: boolean;
+  similarity_score: number; // 0.0 to 1.0
+  likelihood_of_confusion: boolean;
+  confusion_type?: "direct" | "indirect"; // Only if likelihood_of_confusion is true
+}
+
+/**
+ * Request model for goods/services similarity assessment.
+ */
+export interface GsSimilarityRequest {
+  applicant_good: GoodOrService;
+  opponent_good: GoodOrService;
+  mark_similarity: MarkSimilarityOutput; // The output from /mark_similarity
+}
+
+/**
+ * Request model for batch goods/services similarity assessment.
+ */
+export interface BatchGsSimilarityRequest {
+  applicant_goods: GoodOrService[];
+  opponent_goods: GoodOrService[];
+  mark_similarity: MarkSimilarityOutput;
+}
+
+/**
+ * Request model for final case prediction.
+ */
+export interface CasePredictionRequest {
+  mark_similarity: MarkSimilarityOutput;
+  goods_services_likelihoods: GoodServiceLikelihoodOutput[];
+}
+
+/**
+ * Response model for case prediction, replacing the legacy CasePrediction.
+ */
+export interface CasePredictionResult {
+  mark_similarity: MarkSimilarityOutput;
+  goods_services_likelihoods: GoodServiceLikelihoodOutput[];
+  opposition_outcome: OppositionOutcome;
 }
 
 // --- Deprecated / Old Types (to be removed or updated if still used elsewhere) ---
